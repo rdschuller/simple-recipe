@@ -3,32 +3,54 @@
 
 //detect and extract JSON-LD scripts
 const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
-
-let parsedJson = JSON.parse(jsonLdScripts[0].textContent);
-
-
-
+// console.log(jsonLdScripts);
+// console.log(jsonLdScripts.length);
 
 recipeData = null;
 
+// T0-DO --- check if the parsed scrip (original script because some are longer than 1) is an array of objects or the object itself, this is where we are running into issues
+//remember to re add index of 0 for seriouseats success to the original parsedJson
+
 //extract the recipe from the script
-try {
-    let parsedJson = JSON.parse(jsonLdScripts[0].textContent)[0];
-    if (parsedJson['@type'].includes('Recipe')) {
-        recipeData = parsedJson;
-        //console.log(recipeData);
-    }
+for(let script of jsonLdScripts) {  
+    try {
+        let parsedJson = JSON.parse(script.textContent);
+
+        //check for common format of schema object, and parse it as necessary
+        if (Object.keys(parsedJson).includes('0')) {
+            parsedJson = parsedJson[0];
+        }
         
-    }
-catch (error) {
-    console.error("Failed to parse JSON-LD script", error);
+        //check if the parsed script contains the type of 'Recipe'
+        if (parsedJson.hasOwnProperty('@type')) {
+            if (parsedJson['@type'].includes('Recipe')) {
+                recipeData = parsedJson;
+                break;
+            }  
+        }
+        // check if object includes graph and if so if that graph includes the @type of 'Recipe'
+        else if(Object.keys(parsedJson).includes('@graph')) {
+            console.log('check passed');
+            for(let graph of parsedJson['@graph']) {
+                if (graph['@type'].includes('Recipe')) {
+                    recipeData = graph;
+                    break;
+                }
+            }
+        }
+            
+        }
+    catch (error) {
+        console.error("Failed to parse JSON-LD script", error);
+    
+      }
 
 }
-
 
 console.log(recipeData.name);
 console.log(recipeData.recipeIngredient);
 console.log(recipeData.recipeInstructions);
+console.log(recipeData);
 
 
 // extract information relevant to recipe
